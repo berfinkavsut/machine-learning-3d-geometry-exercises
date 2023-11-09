@@ -20,8 +20,8 @@ def occupancy_grid(sdf_function, resolution):
     xx, yy, zz = np.meshgrid(x, y, z, indexing='xy')
     sdf_grid = sdf_function(xx, yy, zz)
 
-    occupancy_grid = sdf_grid
-    occupancy_grid[occupancy_grid < 0] = 1   # negative values are inside
-    occupancy_grid[occupancy_grid >= 0] = 0  # positive values are outside
+    occupancy_grid = np.zeros_like(sdf_grid, dtype=np.int32)
+    occupancy_grid[sdf_grid < 0] = 1  # negative values are inside 
+    
     return occupancy_grid
     # ###############

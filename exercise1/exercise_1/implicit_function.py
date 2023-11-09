@@ -65,6 +65,6 @@ def signed_distance_atom(x, y, z):
     # Electron
     f3 = signed_distance_sphere(x, y, z, electron_radius, *electron_center)
 
-    sdf_union = np.minimum(f1, f2, f3)
+    sdf_union = np.minimum(np.minimum(f1, f2), f3)
     return sdf_union
     # ###############
