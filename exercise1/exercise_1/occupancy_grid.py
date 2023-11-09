@@ -9,10 +9,19 @@ def occupancy_grid(sdf_function, resolution):
     Points may be provides as vectors, i.e. x, y, z can be scalars or 1D numpy arrays, such that (x[0], y[0], z[0])
     is the first point, (x[1], y[1], z[1]) is the second point, and so on
     :param resolution: Resolution of the occupancy grid
-    :return: An occupancy grid of specified resolution (i.e. an array of dim (resolution, resolution, resolution) with value 0 outside the shape and 1 inside.
+    :return: An occupancy grid of specified resolution (i.e. an array of dim (resolution, resolution, resolution)
+             with value 0 outside the shape and 1 inside.
     """
-
     # ###############
-    # TODO: Implement
-    raise NotImplementedError
+    x = np.linspace(start=-0.5, stop=0.5, num=resolution, endpoint=True, dtype=np.float64)
+    y = np.linspace(start=-0.5, stop=0.5, num=resolution, endpoint=True, dtype=np.float64)
+    z = np.linspace(start=-0.5, stop=0.5, num=resolution, endpoint=True, dtype=np.float64)
+
+    xx, yy, zz = np.meshgrid(x, y, z, indexing='xy')
+    sdf_grid = sdf_function(xx, yy, zz)
+
+    occupancy_grid = sdf_grid
+    occupancy_grid[occupancy_grid < 0] = 1   # negative values are inside
+    occupancy_grid[occupancy_grid >= 0] = 0  # positive values are outside
+    return occupancy_grid
     # ###############
