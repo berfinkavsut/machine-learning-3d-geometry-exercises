@@ -17,35 +17,10 @@ def sdf_grid(sdf_function, resolution):
     x_ = np.linspace(start=-0.5, stop=0.5, num=resolution, endpoint=True, dtype=np.float64)
     y_ = np.linspace(start=-0.5, stop=0.5, num=resolution, endpoint=True, dtype=np.float64)
     z_ = np.linspace(start=-0.5, stop=0.5, num=resolution, endpoint=True, dtype=np.float64)
-    z_ = np.linspace(start=-0.5, stop=0.5, num=resolution, endpoint=True, dtype=np.float64)
     xx, yy, zz = np.meshgrid(x_, y_, z_, indexing='ij')
     x, y, z = xx.flatten(), yy.flatten(), zz.flatten()
 
     sdf_values = sdf_function(x, y, z)
     sdf_grid = np.reshape(sdf_values, newshape=(resolution, resolution, resolution), order='F')
-    # ###############
     return sdf_grid
-
-"""
-if __name__ == '__main__':
-    xx, yy, zz = sdf_grid(10)
-
-    print(type(xx), type(yy), type(zz))
-    print(xx.shape, yy.shape, zz.shape)  # Check shapes
-
-    # Plotting code
-    plt.figure()
-    plt.subplot(131)
-    plt.imshow(xx[:, :, 0])  # Fix indexing to display a 2D slice
-    plt.title("xx")
-
-    plt.subplot(132)
-    plt.imshow(yy[:, :, 0])  # Fix indexing to display a 2D slice
-    plt.title("yy")
-
-    plt.subplot(133)
-    plt.imshow(zz[:, 0, :])  # Fix indexing to display a 2D slice
-    plt.title("zz")
-
-    plt.show()
-"""
+    # ###############

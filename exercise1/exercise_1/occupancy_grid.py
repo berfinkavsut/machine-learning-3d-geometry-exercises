@@ -26,12 +26,3 @@ def occupancy_grid(sdf_function, resolution):
 
     return occupancy_grid
     # ###############
-
-"""
-from util.mlp.model import signed_distance_mlp
-if __name__ == '__main__':
-    # TODO: any mistake with occupancy grids?
-    # runs on cpu, so might be slow
-    shape_grid = occupancy_grid(signed_distance_mlp, 32)
-    # visualize_occupancy(shape_grid, flip_axes=True)
-"""
