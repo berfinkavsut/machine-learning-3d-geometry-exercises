@@ -14,15 +14,17 @@ def sdf_grid(sdf_function, resolution):
              with positive values outside the shape and negative values inside.
     """
     # ###############
-    x = np.linspace(start=-0.5, stop=0.5, num=resolution, endpoint=True, dtype=np.float64)
-    y = np.linspace(start=-0.5, stop=0.5, num=resolution, endpoint=True, dtype=np.float64)
-    z = np.linspace(start=-0.5, stop=0.5, num=resolution, endpoint=True, dtype=np.float64)
+    x_ = np.linspace(start=-0.5, stop=0.5, num=resolution, endpoint=True, dtype=np.float64)
+    y_ = np.linspace(start=-0.5, stop=0.5, num=resolution, endpoint=True, dtype=np.float64)
+    z_ = np.linspace(start=-0.5, stop=0.5, num=resolution, endpoint=True, dtype=np.float64)
+    z_ = np.linspace(start=-0.5, stop=0.5, num=resolution, endpoint=True, dtype=np.float64)
+    xx, yy, zz = np.meshgrid(x_, y_, z_, indexing='ij')
+    x, y, z = xx.flatten(), yy.flatten(), zz.flatten()
 
-    xx, yy, zz = np.meshgrid(x, y, z, indexing='xy')
-    sdf_grid = sdf_function(xx, yy, zz)
-
-    return sdf_grid
+    sdf_values = sdf_function(x, y, z)
+    sdf_grid = np.reshape(sdf_values, newshape=(resolution, resolution, resolution), order='F')
     # ###############
+    return sdf_grid
 
 """
 if __name__ == '__main__':

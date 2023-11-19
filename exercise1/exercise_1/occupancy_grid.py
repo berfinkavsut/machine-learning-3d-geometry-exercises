@@ -1,7 +1,6 @@
 """SDF to Occupancy Grid"""
 import numpy as np
 
-
 def occupancy_grid(sdf_function, resolution):
     """
     Create an occupancy grid at the specified resolution given the implicit representation.
@@ -13,15 +12,26 @@ def occupancy_grid(sdf_function, resolution):
              with value 0 outside the shape and 1 inside.
     """
     # ###############
-    x = np.linspace(start=-0.5, stop=0.5, num=resolution, endpoint=True, dtype=np.float64)
-    y = np.linspace(start=-0.5, stop=0.5, num=resolution, endpoint=True, dtype=np.float64)
-    z = np.linspace(start=-0.5, stop=0.5, num=resolution, endpoint=True, dtype=np.float64)
+    x_ = np.linspace(start=-0.5, stop=0.5, num=resolution, endpoint=True, dtype=np.float64)
+    y_ = np.linspace(start=-0.5, stop=0.5, num=resolution, endpoint=True, dtype=np.float64)
+    z_ = np.linspace(start=-0.5, stop=0.5, num=resolution, endpoint=True, dtype=np.float64)
+    xx, yy, zz = np.meshgrid(x_, y_, z_, indexing='ij')
+    x, y, z = xx.flatten(), yy.flatten(), zz.flatten()
 
-    xx, yy, zz = np.meshgrid(x, y, z, indexing='xy')
-    sdf_grid = sdf_function(xx, yy, zz)
+    sdf_values = sdf_function(x, y, z)
+    sdf_grid = np.reshape(sdf_values, newshape=(resolution, resolution, resolution), order='F')
 
     occupancy_grid = np.zeros_like(sdf_grid, dtype=np.int32)
     occupancy_grid[sdf_grid < 0] = 1  # negative values are inside 
-    
+
     return occupancy_grid
     # ###############
+
+"""
+from util.mlp.model import signed_distance_mlp
+if __name__ == '__main__':
+    # TODO: any mistake with occupancy grids?
+    # runs on cpu, so might be slow
+    shape_grid = occupancy_grid(signed_distance_mlp, 32)
+    # visualize_occupancy(shape_grid, flip_axes=True)
+"""
