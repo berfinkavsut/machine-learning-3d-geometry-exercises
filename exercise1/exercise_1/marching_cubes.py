@@ -134,30 +134,6 @@ triangle_table = [
     [8, 1, 9, 8, 3, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1], [1, 9, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
     [8, 3, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1], [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
 ]
-
-# TODO: I added this variable
-vertices_table = [[0, [0, 1]],
-                  [1, [1, 2]],
-                  [2, [2, 3]],
-                  [3, [0, 3]],
-                  [4, [0, 3]],
-                  [5, [5, 6]],
-                  [6, [6, 7]],
-                  [7, [4, 7]],
-                  [8, [0, 4]],
-                  [9, [1, 5]],
-                  [10, [2, 6]],
-                  [11, [3, 7]]]
-
-# TODO: I added this variable
-cube_indices = [[0, [0, 0, 0]],
-                [1, [0, 0, 1]],
-                [2, [0, 1, 0]],
-                [3, [0, 1, 1]],
-                [4, [1, 0, 0]],
-                [5, [1, 0, 1]],
-                [6, [1, 1, 0]],
-                [7, [1, 1, 1]]]
 def compute_cube_index(cube: np.array, isolevel=0.) -> int:
     """
     Takes a cube and returns its Marching Cubes index.
@@ -182,7 +158,7 @@ def compute_cube_index(cube: np.array, isolevel=0.) -> int:
     # ###############
 
 
-# TODO: wrong logic probably, do it from scratch again
+# TODO: wrong results
 def marching_cubes(sdf: np.array) -> tuple:
     """
     Implements Marching Cubes. Using the incoming sdf grid, do the following for each cube:
@@ -198,39 +174,67 @@ def marching_cubes(sdf: np.array) -> tuple:
     global_vertices = []
     global_faces = []
 
-    print(len(triangle_table))
+    vertices_table = [[0, 1], [1, 2], [2, 3], [0, 3],
+                      [4, 5], [5, 6], [6, 7], [4, 7],
+                      [0, 4], [1, 5], [2, 6], [3, 7]]
+
+    count = 0
     for i in range(sdf.shape[0]-1):
         for j in range(sdf.shape[1]-1):
             for k in range(sdf.shape[2]-1):
-                cube = sdf[i:i+2, j:j+2, k:k+2].flatten()
-                # print(cube.shape)
-                cube_index = compute_cube_index(cube)
-                edge_indices = triangle_table[cube_index]
+
+                # TODO: correct it
+                # define indices in the order as given in the notebook
+                indices = [(i, j, k),
+                           (i + 1, j, k),
+                           (i + 1, j + 1, k),
+                           (i, j + 1, k),
+                           (i, j, k + 1),
+                           (i + 1, j, k + 1),
+                           (i + 1, j + 1, k + 1),
+                           (i, j + 1, k + 1)]
+
+                # take the corner values in the sdf and find the corresponding cube index
+                corner_values = [sdf[idx] for idx in indices]
+                corner_values = np.array(corner_values)
+                cube_idx = compute_cube_index(corner_values)
+
+                # take the edge indices from cube index
+                edge_indices = triangle_table[cube_idx]
                 edge_indices = [idx for idx in edge_indices if idx != -1]
-                for n in range(len(edge_indices)):
-                    vertices_idx = edge_indices[n]
-                    corners = vertices_table[vertices_idx][1]
+
+                # three edges define on face
+                face_num = int(len(edge_indices) / 3)
+
+                for n in range(face_num):
 
                     vertices = []
-                    points = []
-                    for m in range(2):
-                        corner_coord = cube_indices[corners[m]][1]
-                        corner_value = sdf[i:(i+corner_coord[0]),
-                                           j:(j+corner_coord[1]),
-                                           k:(k+corner_coord[2])]
-                        vertices.extend(corner_value)
-                        points.extend(corner_coord)
+                    for m in range(3):
+                        # points connected by the edge
+                        edge_idx = edge_indices[n*3 + m]
+                        p1, p2 = vertices_table[edge_idx]
 
-                    interpolated_vertices = vertex_interpolation(*corners, *vertices)
-                    # Step 3: Add vertices and faces to global lists
-                    global_vertices.extend(interpolated_vertices)
-                    global_faces.extend(np.reshape(np.arange(len(vertices)), (-1, 3)))
+                        # sdf values on the corners
+                        v1 = corner_values[p1]
+                        v2 = corner_values[p2]
 
-    # Convert global lists to numpy arrays
-    vertices_array = np.array(global_vertices)
-    faces_array = np.array(global_faces)
+                        p1_idx = [indices[p1][0], indices[p1][1], indices[p1][2]]
+                        p2_idx = [indices[p2][0], indices[p2][1], indices[p2][2]]
 
-    return vertices_array, faces_array
+                        vertices_ = [vertex_interpolation(p1_idx[0], p2_idx[0], v1, v2),
+                                     vertex_interpolation(p1_idx[1], p2_idx[1], v1, v2),
+                                     vertex_interpolation(p1_idx[2], p2_idx[2], v1, v2)]
+
+                        vertices.extend(vertices_)
+
+                    global_vertices.append(vertices)  # 3 vertices
+                    global_faces.append([count, count+1, count+2])  # for one face
+                    count = count + 3
+
+    global_vertices = np.array(global_vertices)
+    global_faces = np.array(global_faces)
+
+    return global_vertices, global_faces
     # ###############
 
 
@@ -244,4 +248,7 @@ def vertex_interpolation(p_1, p_2, v_1, v_2, isovalue=0.):
     :param isovalue: The iso value, always 0 in our case
     :return: A single point
     """
+    # TODO: wrong
+    t = v_1 / (v_2 - v_1)
     return p_1 + (p_2 - p_1) / 2.
+    # return p_1 + t * (p_2 - p_1)
