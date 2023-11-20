@@ -231,6 +231,7 @@ def marching_cubes(sdf: np.array) -> tuple:
 
                         vertices.extend(vertices_)
 
+                    # TODO: wrong face number at the end (3 times more!)
                     global_vertices.append(vertices)  # 3 vertices
                     global_faces.append([count, count+1, count+2])  # for one face
                     count = count + 3

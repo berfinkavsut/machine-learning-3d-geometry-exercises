@@ -14,6 +14,7 @@ def export_mesh_to_obj(path, vertices, faces):
     # write faces starting with "f "
 
     # ###############
+    faces = faces + 1
     with open(path, 'w') as file:
         for vertex in vertices:
             v_str = 'v' + ' ' + str(vertex[0]) + ' ' + str(vertex[1]) + ' ' + str(vertex[2]) + ' \n'
