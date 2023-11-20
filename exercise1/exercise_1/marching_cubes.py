@@ -183,16 +183,24 @@ def marching_cubes(sdf: np.array) -> tuple:
         for j in range(sdf.shape[1]-1):
             for k in range(sdf.shape[2]-1):
 
-                # TODO: correct it
                 # define indices in the order as given in the notebook
-                indices = [(i, j, k),
-                           (i + 1, j, k),
-                           (i + 1, j + 1, k),
-                           (i, j + 1, k),
-                           (i, j, k + 1),
-                           (i + 1, j, k + 1),
-                           (i + 1, j + 1, k + 1),
-                           (i, j + 1, k + 1)]
+                corner_pos = [[0, 0, 0],
+                              [1, 0, 0],
+                              [1, 1, 0],
+                              [0, 1, 0],
+                              [0, 0, 1],
+                              [1, 0, 1],
+                              [1, 1, 1],
+                              [0, 1, 1]]
+
+                indices = [(i, j+1, k+1),
+                           (i+1, j+1, k+1),
+                           (i+1, j, k+1),
+                           (i, j, k+1),
+                           (i, j+1, k),
+                           (i+1, j+1, k),
+                           (i+1, j, k),
+                           (i, j, k)]
 
                 # take the corner values in the sdf and find the corresponding cube index
                 corner_values = [sdf[idx] for idx in indices]
@@ -218,8 +226,8 @@ def marching_cubes(sdf: np.array) -> tuple:
                         v1 = corner_values[p1]
                         v2 = corner_values[p2]
 
-                        p1_idx = [indices[p1][0], indices[p1][1], indices[p1][2]]
-                        p2_idx = [indices[p2][0], indices[p2][1], indices[p2][2]]
+                        p1_idx = [corner_pos[p1][0] + i, corner_pos[p1][1] + j, corner_pos[p1][2] + k]
+                        p2_idx = [corner_pos[p2][0] + i, corner_pos[p2][1] + j, corner_pos[p2][2] + k]
 
                         vertices_ = [vertex_interpolation(p1_idx[0], p2_idx[0], v1, v2),
                                      vertex_interpolation(p1_idx[1], p2_idx[1], v1, v2),
@@ -248,7 +256,6 @@ def vertex_interpolation(p_1, p_2, v_1, v_2, isovalue=0.):
     :param isovalue: The iso value, always 0 in our case
     :return: A single point
     """
-    # TODO: wrong
-    t = v_1 / (v_2 - v_1)
-    return p_1 + (p_2 - p_1) / 2.
-    # return p_1 + t * (p_2 - p_1)
+
+    t = (isovalue - v_1) / (v_2 - v_1)
+    return p_1 + t * (p_2 - p_1)
