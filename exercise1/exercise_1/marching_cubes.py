@@ -134,6 +134,7 @@ triangle_table = [
     [8, 1, 9, 8, 3, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1], [1, 9, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
     [8, 3, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1], [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
 ]
+
 def compute_cube_index(cube: np.array, isolevel=0.) -> int:
     """
     Takes a cube and returns its Marching Cubes index.
@@ -158,7 +159,6 @@ def compute_cube_index(cube: np.array, isolevel=0.) -> int:
     # ###############
 
 
-# TODO: wrong results
 def marching_cubes(sdf: np.array) -> tuple:
     """
     Implements Marching Cubes. Using the incoming sdf grid, do the following for each cube:
@@ -203,8 +203,7 @@ def marching_cubes(sdf: np.array) -> tuple:
                            (i, j, k)]
 
                 # take the corner values in the sdf and find the corresponding cube index
-                corner_values = [sdf[idx] for idx in indices]
-                corner_values = np.array(corner_values)
+                corner_values = np.array([sdf[idx] for idx in indices])
                 cube_idx = compute_cube_index(corner_values)
 
                 # take the edge indices from cube index
@@ -220,18 +219,15 @@ def marching_cubes(sdf: np.array) -> tuple:
                     for m in range(3):
                         # points connected by the edge
                         edge_idx = edge_indices[n*3 + m]
-                        p1, p2 = vertices_table[edge_idx]
+                        p1_idx, p2_idx = vertices_table[edge_idx]
+                        p1 = [corner_pos[p1_idx][0] + i, corner_pos[p1_idx][1] + j, corner_pos[p1_idx][2] + k]
+                        p2 = [corner_pos[p2_idx][0] + i, corner_pos[p2_idx][1] + j, corner_pos[p2_idx][2] + k]
+                        v1 = sdf[p1[0], p1[1], p1[2]]
+                        v2 = sdf[p2[0], p2[1], p2[2]]
 
-                        # sdf values on the corners
-                        v1 = corner_values[p1]
-                        v2 = corner_values[p2]
-
-                        p1_idx = [corner_pos[p1][0] + i, corner_pos[p1][1] + j, corner_pos[p1][2] + k]
-                        p2_idx = [corner_pos[p2][0] + i, corner_pos[p2][1] + j, corner_pos[p2][2] + k]
-
-                        vertices_ = [vertex_interpolation(p1_idx[0], p2_idx[0], v1, v2),
-                                     vertex_interpolation(p1_idx[1], p2_idx[1], v1, v2),
-                                     vertex_interpolation(p1_idx[2], p2_idx[2], v1, v2)]
+                        vertices_ = [vertex_interpolation(p1[0], p2[0], v1, v2),
+                                     vertex_interpolation(p1[1], p2[1], v1, v2),
+                                     vertex_interpolation(p1[2], p2[2], v1, v2)]
 
                         vertices.extend(vertices_)
 
@@ -256,6 +252,5 @@ def vertex_interpolation(p_1, p_2, v_1, v_2, isovalue=0.):
     :param isovalue: The iso value, always 0 in our case
     :return: A single point
     """
-
     t = (isovalue - v_1) / (v_2 - v_1)
     return p_1 + t * (p_2 - p_1)
