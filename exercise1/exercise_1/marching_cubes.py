@@ -183,16 +183,17 @@ def marching_cubes(sdf: np.array) -> tuple:
         for j in range(sdf.shape[1]-1):
             for k in range(sdf.shape[2]-1):
 
-                # define indices in the order as given in the notebook
-                corner_pos = [[0, 0, 0],
-                              [1, 0, 0],
-                              [1, 1, 0],
-                              [0, 1, 0],
-                              [0, 0, 1],
-                              [1, 0, 1],
-                              [1, 1, 1],
-                              [0, 1, 1]]
+                # define corner indices in the order as given in the notebook
+                corner_pos = [[0, 0, 0],  # 0
+                              [1, 0, 0],  # 1
+                              [1, 1, 0],  # 2
+                              [0, 1, 0],  # 3
+                              [0, 0, 1],  # 4
+                              [1, 0, 1],  # 5
+                              [1, 1, 1],  # 6
+                              [0, 1, 1]]  # 7
 
+                # my note: reverse order
                 indices = [(i, j+1, k+1),
                            (i+1, j+1, k+1),
                            (i+1, j, k+1),
@@ -201,6 +202,15 @@ def marching_cubes(sdf: np.array) -> tuple:
                            (i+1, j+1, k),
                            (i+1, j, k),
                            (i, j, k)]
+
+                """indices = [(i, j + 1, k + 1),
+                           (i + 1, j + 1, k + 1),
+                           (i + 1, j + 1, k),
+                           (i, j + 1, k),
+                           (i, j, k + 1),
+                           (i + 1, j, k + 1),
+                           (i + 1, j, k),
+                           (i, j, k)]"""
 
                 # take the corner values in the sdf and find the corresponding cube index
                 corner_values = np.array([sdf[idx] for idx in indices])
@@ -215,7 +225,7 @@ def marching_cubes(sdf: np.array) -> tuple:
 
                 for n in range(face_num):
 
-                    vertices = []
+                    face = []
                     for m in range(3):
                         # points connected by the edge
                         edge_idx = edge_indices[n*3 + m]
@@ -225,16 +235,15 @@ def marching_cubes(sdf: np.array) -> tuple:
                         v1 = sdf[p1[0], p1[1], p1[2]]
                         v2 = sdf[p2[0], p2[1], p2[2]]
 
-                        vertices_ = [vertex_interpolation(p1[0], p2[0], v1, v2),
-                                     vertex_interpolation(p1[1], p2[1], v1, v2),
-                                     vertex_interpolation(p1[2], p2[2], v1, v2)]
+                        vertices = [vertex_interpolation(p1[0], p2[0], v1, v2),
+                                    vertex_interpolation(p1[1], p2[1], v1, v2),
+                                    vertex_interpolation(p1[2], p2[2], v1, v2)]
 
-                        vertices.extend(vertices_)
+                        global_vertices.append(vertices)
+                        face.append(count)
+                        count = count + 1
 
-                    # TODO: wrong face number at the end (3 times more!)
-                    global_vertices.append(vertices)  # 3 vertices
-                    global_faces.append([count, count+1, count+2])  # for one face
-                    count = count + 3
+                    global_faces.append(face)  # for one face
 
     global_vertices = np.array(global_vertices)
     global_faces = np.array(global_faces)
@@ -253,5 +262,6 @@ def vertex_interpolation(p_1, p_2, v_1, v_2, isovalue=0.):
     :param isovalue: The iso value, always 0 in our case
     :return: A single point
     """
-    t = (isovalue - v_1) / (v_2 - v_1)
+
+    t = (-v_1) / (v_2 - v_1)
     return p_1 + t * (p_2 - p_1)
