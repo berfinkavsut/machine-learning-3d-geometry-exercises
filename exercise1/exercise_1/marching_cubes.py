@@ -193,7 +193,7 @@ def marching_cubes(sdf: np.array) -> tuple:
                               [1, 1, 1],  # 6
                               [0, 1, 1]]  # 7
 
-                # my note: reverse order
+                # TODO found by trial and error, why this order?
                 indices = [(i, j+1, k+1),
                            (i+1, j+1, k+1),
                            (i+1, j, k+1),
@@ -263,5 +263,7 @@ def vertex_interpolation(p_1, p_2, v_1, v_2, isovalue=0.):
     :return: A single point
     """
 
+    # p_2 > p_1
+    # v_1 is negative, v_2 is positive
     t = (-v_1) / (v_2 - v_1)
     return p_1 + t * (p_2 - p_1)
