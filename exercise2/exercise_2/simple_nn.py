@@ -6,41 +6,77 @@ from exercise_2.util.toy_data import generate_toy_data
 
 
 class SimpleDataset(torch.utils.data.Dataset):
-    # TODO: Implement __init__, __getitem__, __len__
-    def __init__(self):
-        pass
-
+    ###########################################################
+    def __init__(self, split):
+      
+      self.split = 'train' 
+      if split in ['train', 'val']:
+        self.split = split 
+      
+      # two column numpy array: containing sphere/torus SDF, 
+      #                         label (0 for sphere, 1 for torus)
+      self.data = None 
+      if self.split == 'train':
+        self.data = generate_toy_data(num_samples=4096)
+      elif self.split == 'val':
+        self.data = generate_toy_data(num_samples=1024)
+      
     def __getitem__(self, idx):
-        pass
+      obj = self.data[0][idx].copy()
+      obj = np.reshape(obj, (1, *obj.shape))
+      label = self.data[1][idx]
+      return (obj, label)
 
     def __len__(self):
-        pass
+        return len(self.data[0])
+    ###########################################################
 
 
 class SimpleModel(torch.nn.Module):
     def __init__(self):
         super().__init__()
+
         self.conv1 = torch.nn.Conv3d(in_channels=1, out_channels=4, kernel_size=4, stride=3, padding=1)
         self.bn1 = torch.nn.BatchNorm3d(4)
-        # TODO: Add conv2 and conv3 with the same parameters as conv1; also, add bn2 and bn3
+        ###########################################################
 
-        # TODO: Add Linear layer for classification which reduces the number of features from 16 to 2
-        # TODO: Add a ReLU
+        # Add conv2 and conv3 with the same parameters as conv1; also, add bn2 and bn3
+        self.conv2 = torch.nn.Conv3d(in_channels=4, out_channels=8, kernel_size=4, stride=3, padding=1)
+        self.bn2 = torch.nn.BatchNorm3d(8)
+        self.conv3 = torch.nn.Conv3d(in_channels=8, out_channels=16, kernel_size=4, stride=3, padding=1)
+        self.bn3 = torch.nn.BatchNorm3d(16)
+
+        # Add Linear layer for classification which reduces the number of features from 16 to 2
+        self.linear_layer = torch.nn.Linear(in_features=16, out_features=2)
+
+        # Add a ReLU
+        self.relu = torch.nn.ReLU()
+        ###########################################################
 
     def forward(self, x):
         x = self.relu(self.bn1(self.conv1(x)))
-        # TODO: Move tensor through layers 2 and 3
-        # TODO: Apply the classification layer. Use .view() to reshape the output of layer 3 into the correct format
+        ###########################################################
 
+        # Move tensor through layers 2 and 3
+        x = self.relu(self.bn2(self.conv2(x)))
+        x = self.relu(self.bn3(self.conv3(x)))
+
+        # Apply the classification layer. Use .view() to reshape 
+        # the output of layer 3 into the correct format
+        x = x.view(-1, 16)  # flatten
+         
+        x = self.linear_layer(x)
+        ###########################################################
         return x
+        
 
 
 def train(model, train_dataloader, val_dataloader, device, config):
-    # TODO Declare Loss function; Use CrossEntropyLoss
-    loss_criterion = None
+    # Declare Loss function; Use CrossEntropyLoss
+    loss_criterion = torch.nn.CrossEntropyLoss()
 
-    # TODO Declare optimizer; Use ADAM with learning rate from config['learning_rate']
-    optimizer = None
+    # Declare optimizer; Use ADAM with learning rate from config['learning_rate']
+    optimizer = torch.optim.Adam(model.parameters(), lr=config['learning_rate'])
 
     # Set model to train, important if your network has e.g. dropout or batchnorm layers
     model.train()
@@ -54,7 +90,10 @@ def train(model, train_dataloader, val_dataloader, device, config):
 
         for i, batch in enumerate(train_dataloader):
             input_data, target_labels = batch
-            # TODO Move input_data and target_labels to device
+            
+            # Move input_data and target_labels to device
+            input_data = input_data.to(device)
+            target_labels = target_labels.to(device)
 
             # This is where the actual training happens:
             # 1 Zero out gradients from last iteration
@@ -86,7 +125,10 @@ def train(model, train_dataloader, val_dataloader, device, config):
                 loss_val = 0.
                 for batch_val in val_dataloader:
                     input_data, target_labels = batch_val
-                    # TODO Move input_data and target_labels to device
+                    
+                    # Move input_data and target_labels to device
+                    input_data = input_data.to(device)
+                    target_labels = target_labels.to(device)
 
                     with torch.no_grad():
                         prediction = model(input_data)
@@ -120,7 +162,7 @@ def main(config):
         print('Using CPU')
 
     # Create Dataloaders
-    train_dataset = None  # TODO Instantiate Dataset in train split
+    train_dataset = SimpleDataset(split='train')  # Instantiate Dataset in train split
     train_dataloader = torch.utils.data.DataLoader(
         train_dataset,   # Datasets return data one sample at a time; Dataloaders use them and aggregate samples into batches
         batch_size=config['batch_size'],   # The size of batches is defined here
@@ -129,7 +171,7 @@ def main(config):
         pin_memory=True  # This is an implementation detail to speed up data uploading to the GPU
     )
 
-    val_dataset = None  # TODO Instantiate Dataset in val split
+    val_dataset = SimpleDataset(split='val')  # Instantiate Dataset in val split
     val_dataloader = torch.utils.data.DataLoader(
         val_dataset,     # Datasets return data one sample at a time; Dataloaders use them and aggregate samples into batches
         batch_size=config['batch_size'],   # The size of batches is defined here
@@ -138,8 +180,9 @@ def main(config):
         pin_memory=True  # This is an implementation detail to speed up data uploading to the GPU
     )
 
-    # TODO Instantiate model and move to device
-    model = None
+    # Instantiate model and move to device
+    model = SimpleModel()
+    model = model.to(device)
 
     # Create folder for saving checkpoints
     Path(f'exercise_2/runs/{config["experiment_name"]}').mkdir(exist_ok=True, parents=True)

@@ -26,7 +26,7 @@ class ShapeNetVox(torch.utils.data.Dataset):
         assert split in ['train', 'val', 'overfit']
 
         self.items = Path(f"exercise_2/data/splits/shapenet/{split}.txt").read_text().splitlines()  # keep track of shapes based on split
-
+  
     def __getitem__(self, index):
         """
         PyTorch requires you to provide a getitem implementation for your dataset.
@@ -36,12 +36,16 @@ class ShapeNetVox(torch.utils.data.Dataset):
                  "voxel", a 1x32x32x32 numpy float32 array representing the shape
                  "label", a number in [0, 12] representing the class of the shape
         """
-        # TODO Get item associated with index, get class, load voxels with ShapeNetVox.get_shape_voxels
-        item = None
+        ########################################################################
+        # Get item associated with index, get class, load voxels with ShapeNetVox.get_shape_voxels
+        item = self.items[index]
+
         # Hint: since shape names are in the format "<shape_class>/<shape_identifier>", the first part gives the class
-        item_class = None
+        item_class, _ = item.split('/')
+
         # read voxels from binvox format on disk as 3d numpy arrays
-        voxels = None
+        voxels = ShapeNetVox.get_shape_voxels(item)
+        ########################################################################
         return {
             "name": item,
             "voxel": voxels[np.newaxis, :, :, :],  # we add an extra dimension as the channel axis, since pytorch 3d tensors are Batch x Channel x Depth x Height x Width
@@ -52,8 +56,10 @@ class ShapeNetVox(torch.utils.data.Dataset):
         """
         :return: length of the dataset
         """
-        # TODO Implement
-        return
+        ########################################################################
+        length = len(self.items)
+        ########################################################################
+        return length
 
     @staticmethod
     def move_batch_to_device(batch, device):
