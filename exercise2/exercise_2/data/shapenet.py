@@ -141,7 +141,7 @@ class ShapeNetPoints(torch.utils.data.Dataset):
         category_id, shape_id = shapenet_id.split('/')
 
         ########################################################################
-        with open(ShapeNetPoints.dataset_path / category_id / f"{shape_id}.obj", "rb") as fptr:
-            points = read_as_3d_array(fptr).astype(np.float32)
+        path = ShapeNetPoints.dataset_path / category_id / f"{shape_id}.obj"
+        points = trimesh.load(path).vertices
         return points
         ########################################################################
