@@ -30,23 +30,21 @@ class TNet(nn.Module):
 
         # Linear 1024->512, 512->256, 256->k^2 with corresponding batch norms and ReLU
         self.linear4 = nn.Sequential(
-            nn.Linear(1024, 512),
+            nn.Linear(in_features=1024, out_features=512),
             nn.BatchNorm1d(512),
             nn.ReLU(),
-            nn.Dropout(p=0.7)
         )
 
         self.linear5 = nn.Sequential(
-            nn.Linear(512, 256),
+            nn.Linear(in_features=512, out_features=256),
             nn.BatchNorm1d(256),
             nn.ReLU(),
-            nn.Dropout(p=0.7)
         )
 
         self.linear6 = nn.Sequential(
-            nn.Linear(256, k ** 2),
-            nn.Dropout(p=0.7)
+            nn.Linear(in_features=256, out_features=k ** 2),
         )
+
         ########################################################################
         self.register_buffer('identity', torch.from_numpy(np.eye(k).flatten().astype(np.float32)).view(1, k ** 2))
         self.k = k
@@ -54,21 +52,23 @@ class TNet(nn.Module):
     def forward(self, x):
         b = x.shape[0]
 
+        ########################################################################
         # Pass input through layers, applying the same max operation as in PointNetEncoder
         # No batch norm and relu after the last Linear layer
         ########################################################################
+        # Convolutional layers
         x = self.conv1(x)
         x = self.conv2(x)
         x = self.conv3(x)
 
-        x = self.linear4(x)
-        x = self.linear5(x)
-        x = self.linear6(x)
-
-        # This is the symmetric max operation
+        # Max operation
         x = torch.max(x, 2, keepdim=True)[0]
         x = x.view(-1, 1024)
 
+        # Linear layers
+        x = self.linear4(x)
+        x = self.linear5(x)
+        x = self.linear6(x)
         ########################################################################
 
         # Adding the identity to constrain the feature transformation matrix to be close to orthogonal matrix
@@ -77,15 +77,26 @@ class TNet(nn.Module):
         x = x.view(-1, self.k, self.k)
         return x
 
-
 class PointNetEncoder(nn.Module):
     def __init__(self, return_point_features=False):
         super().__init__()
 
-        # TODO Define convolution layers, batch norm layers, and ReLU
-
+        ########################################################################
         self.input_transform_net = TNet(k=3)
+
         self.feature_transform_net = TNet(k=64)
+
+        # Define convolution layers, batch norm layers, and ReLU
+        self.conv1 = nn.Conv1d(in_channels=3, out_channels=64)
+        self.conv2 = nn.Conv1d(in_channels=64, out_channels=128)
+        self.conv3 = nn.Conv1d(in_channels=128, out_channels=1024)
+
+        self.bn1 = nn.BatchNorm1d(64)
+        self.bn2 = nn.BatchNorm1d(128)
+        self.bn3 = nn.BatchNorm1d(1024)
+
+        self.relu = nn.ReLU()
+        ########################################################################
 
         self.return_point_features = return_point_features
 
@@ -95,13 +106,20 @@ class PointNetEncoder(nn.Module):
         input_transform = self.input_transform_net(x)
         x = torch.bmm(x.transpose(2, 1), input_transform).transpose(2, 1)
 
-        # TODO: First layer: 3->64
+        ########################################################################
+        # First layer: 3->64
+        x = self.relu(self.bn1(self.conv1(x)))
+        ########################################################################
 
         feature_transform = self.feature_transform_net(x)
         x = torch.bmm(x.transpose(2, 1), feature_transform).transpose(2, 1)
         point_features = x
 
-        # TODO: Layers 2 and 3: 64->128, 128->1024
+        ########################################################################
+        # Layers 2 and 3: 64->128, 128->1024
+        x = self.relu(self.bn2(self.conv2(x)))
+        x = self.relu(self.bn3(self.conv3(x)))
+        ########################################################################
 
         # This is the symmetric max operation
         x = torch.max(x, 2, keepdim=True)[0]
@@ -113,19 +131,39 @@ class PointNetEncoder(nn.Module):
         else:
             return x
 
-
 class PointNetClassification(nn.Module):
     def __init__(self, num_classes):
         super().__init__()
         self.encoder = PointNetEncoder(return_point_features=False)
-        # TODO Add Linear layers, batch norms, dropout with p=0.3, and ReLU
+
+        ########################################################################
+        # Add Linear layers, batch norms, dropout with p=0.3, and ReLU
         # Batch Norms and ReLUs are used after all but the last layer
         # Dropout is used only directly after the second Linear layer
         # The last Linear layer reduces the number of feature channels to num_classes (=k in the architecture visualization)
+        ########################################################################
+        self.fc1 = nn.Linear(in_features=1024, out_features=512)
+        self.fc2 = nn.Linear(in_features=512, out_features=256)
+        self.fc3 = nn.Linear(in_features=256, out_features=num_classes)
+
+        self.bn1 = nn.BatchNorm1d(512)
+        self.bn2 = nn.BatchNorm1d(256)
+
+        self.dropout = nn.Dropout(p=0.3)
+
+        self.relu = nn.ReLU()
+        ########################################################################
 
     def forward(self, x):
         x = self.encoder(x)
-        # TODO Pass output of encoder through your layers
+        ########################################################################
+        # Pass output of encoder through your layers
+        ########################################################################
+        x = self.relu(self.bn1(self.fc1(x)))
+        x = self.relu(self.bn2(self.fc2(x)))
+        x = self.dropout(x)
+        x = self.fc3(x)
+        ########################################################################
         return x
 
 
