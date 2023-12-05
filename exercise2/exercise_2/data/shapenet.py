@@ -40,10 +40,10 @@ class ShapeNetVox(torch.utils.data.Dataset):
         # Get item associated with index, get class, load voxels with ShapeNetVox.get_shape_voxels
         item = self.items[index]
 
-        # Hint: since shape names are in the format "<shape_class>/<shape_identifier>", the first part gives the class
+        # Since shape names are in the format "<shape_class>/<shape_identifier>", the first part gives the class
         item_class, _ = item.split('/')
 
-        # read voxels from binvox format on disk as 3d numpy arrays
+        # Read voxels from binvox format on disk as 3d numpy arrays
         voxels = ShapeNetVox.get_shape_voxels(item)
         ########################################################################
         return {
@@ -88,25 +88,39 @@ class ShapeNetPoints(torch.utils.data.Dataset):
     class_name_mapping = json.loads(Path("exercise_2/data/shape_info.json").read_text())  # mapping for ShapeNet ids -> names
     classes = sorted(class_name_mapping.keys())
 
-    def __init__(self):
-        # TODO Read sample IDs from the correct split file and store in self.items
-        pass
+    def __init__(self, split):
+       ########################################################################
+        super().__init__()
+        assert split in ['train', 'val', 'overfit']
+        
+        # Read sample IDs from the correct split file and store in self.items
+        self.items = Path(f"exercise_2/data/splits/shapenet/{split}.txt").read_text().splitlines()  # keep track of shapes based on split
+        ########################################################################
 
     def __getitem__(self, index):
-        # TODO Get item associated with index, get class, load points with ShapeNetPoints.get_point_cloud
+      
+        ########################################################################
+        # Get item associated with index, get class, load voxels with ShapeNetVox.get_shape_voxels
+        item = self.items[index]
 
-        # Hint: Since shape names are in the format "<shape_class>/<shape_identifier>", the first part gives the class
-        item_class = None
+        # Since shape names are in the format "<shape_class>/<shape_identifier>", the first part gives the class
+        item_class, _ = item.split('/')
+
+        # Read voxels from binvox format on disk as 3d numpy arrays
+        points = ShapeNetPoints.get_point_cloud(item)
+        ########################################################################
 
         return {
-            "name": None,  # The item ID
-            "points": None,
+            "name": item,  # The item ID
+            "points": points,
             "label": ShapeNetPoints.classes.index(item_class)  # Label is 0 indexed position in sorted class list, e.g. 02691156 is label 0, 02828884 is label 1 and so on.
         }
 
     def __len__(self):
-        # TODO Implement
-        pass
+        ########################################################################
+        length = len(self.items)
+        ########################################################################
+        return length
 
     @staticmethod
     def move_batch_to_device(batch, device):
@@ -126,5 +140,8 @@ class ShapeNetPoints(torch.utils.data.Dataset):
         """
         category_id, shape_id = shapenet_id.split('/')
 
-        # TODO Implement
-        pass
+        ########################################################################
+        with open(ShapeNetPoints.dataset_path / category_id / f"{shape_id}.obj", "rb") as fptr:
+            points = read_as_3d_array(fptr).astype(np.float32)
+        return points
+        ########################################################################
