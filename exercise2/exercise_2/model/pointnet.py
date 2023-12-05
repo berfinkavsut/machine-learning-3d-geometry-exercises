@@ -7,9 +7,34 @@ import torch.nn.functional as F
 class TNet(nn.Module):
     def __init__(self, k):
         super().__init__()
-        # TODO Add layers: Convolutional k->64, 64->128, 128->1024 with corresponding batch norms and ReLU
-        # TODO Add layers: Linear 1024->512, 512->256, 256->k^2 with corresponding batch norms and ReLU
+        ########################################################################
+        # Convolutional k->64, 64->128, 128->1024 with corresponding batch norms and ReLU
+        self.conv1 = nn.Conv3d(in_channels=k, out_channels=64),
+        self.batch_norm1 = nn.BatchNorm3d(64)
+        self.relu1 = nn.ReLU()
+        
+        self.conv2 = nn.Conv3d(in_channels=64, out_channels=128),
+        self.batch_norm2 = nn.BatchNorm3d(128)
+        self.relu2 = nn.ReLU()
 
+        self.conv3 = nn.Conv3d(in_channels=128, out_channels=1024),
+        self.batch_norm3 = nn.BatchNorm3d(1024)
+        self.relu3 = nn.ReLU() 
+
+        # Linear 1024->512, 512->256, 256->k^2 with corresponding batch norms and ReLU
+        self.linear4 = nn.Linear(in_features=1024, out_features=512)
+        self.batch_norm4 = nn.BatchNorm3d(512)
+        self.relu4 = nn.ReLU() 
+
+        self.linear5  = nn.Linear(in_features=512, out_features=256)
+        self.batch_norm5 = nn.BatchNorm3d(256)
+        self.relu5 = nn.ReLU() 
+
+        self.linear6 = nn.Linear(in_features=256, out_features=k**2)
+        self.batch_norm6 = nn.BatchNorm3d(k**2)
+        self.relu6 = nn.ReLU() 
+        
+        ########################################################################
         self.register_buffer('identity', torch.from_numpy(np.eye(k).flatten().astype(np.float32)).view(1, k ** 2))
         self.k = k
 
