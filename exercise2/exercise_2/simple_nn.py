@@ -13,8 +13,7 @@ class SimpleDataset(torch.utils.data.Dataset):
       if split in ['train', 'val']:
         self.split = split 
       
-      # two column numpy array: containing sphere/torus SDF, 
-      #                         label (0 for sphere, 1 for torus)
+      # two column numpy array: containing sphere/torus SDF, label (0 for sphere, 1 for torus)
       self.data = None 
       if self.split == 'train':
         self.data = generate_toy_data(num_samples=4096)
@@ -47,7 +46,7 @@ class SimpleModel(torch.nn.Module):
         self.bn3 = torch.nn.BatchNorm3d(16)
 
         # Add Linear layer for classification which reduces the number of features from 16 to 2
-        self.linear_layer = torch.nn.Linear(in_features=16, out_features=2)
+        self.fc = torch.nn.Linear(in_features=16, out_features=2)
 
         # Add a ReLU
         self.relu = torch.nn.ReLU()
@@ -65,7 +64,7 @@ class SimpleModel(torch.nn.Module):
         # the output of layer 3 into the correct format
         x = x.view(-1, 16)  # flatten
          
-        x = self.linear_layer(x)
+        x = self.fc(x)
         ###########################################################
         return x
         
