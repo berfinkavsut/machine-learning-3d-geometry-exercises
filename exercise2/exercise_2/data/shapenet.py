@@ -143,5 +143,6 @@ class ShapeNetPoints(torch.utils.data.Dataset):
         ########################################################################
         path = ShapeNetPoints.dataset_path / category_id / f"{shape_id}.obj"
         points = trimesh.load(path).vertices
+        points = (points.T).astype(np.float32)
         return points
         ########################################################################
