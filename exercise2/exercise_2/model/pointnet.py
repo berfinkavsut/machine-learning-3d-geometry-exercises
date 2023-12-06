@@ -10,9 +10,9 @@ class TNet(nn.Module):
 
         ########################################################################
         # Convolutional k->64, 64->128, 128->1024 with corresponding batch norms and ReLU
-        self.conv1 = nn.Conv1d(in_channels=k, out_channels=64, kernel_size=1, stride=1)
-        self.conv2 = nn.Conv1d(in_channels=64, out_channels=128, kernel_size=1, stride=1)
-        self.conv3 = nn.Conv1d(in_channels=128, out_channels=1024, kernel_size=1, stride=1)
+        self.conv1 = nn.Conv1d(in_channels=k, out_channels=64, kernel_size=1)
+        self.conv2 = nn.Conv1d(in_channels=64, out_channels=128, kernel_size=1)
+        self.conv3 = nn.Conv1d(in_channels=128, out_channels=1024, kernel_size=1)
 
         # Linear 1024->512, 512->256, 256->k^2 with corresponding batch norms and ReLU
         self.fc1 = nn.Linear(in_features=1024, out_features=512)
