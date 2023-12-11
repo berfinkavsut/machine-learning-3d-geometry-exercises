@@ -183,4 +183,4 @@ class PointNetSegmentation(nn.Module):
         ########################################################################
 
         x = x.transpose(2, 1).contiguous()
-        return x
+        return torch.softmax(x, -1)

@@ -17,6 +17,7 @@ class InferenceHandler3DCNN:
         self.model.load_state_dict(torch.load(ckpt, map_location='cpu'))
         self.model.eval()
 
+    # noinspection PyInterpreter
     def infer_single(self, voxels):
         """
         Infer class of the shape given its voxel grid representation
