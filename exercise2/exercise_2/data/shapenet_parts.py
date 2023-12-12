@@ -9,6 +9,7 @@ class ShapeNetParts(torch.utils.data.Dataset):
     num_classes = 50  # We have 50 parts classes to segment
     num_points = 1024
     dataset_path = Path("exercise_2/data/shapenetcore_partanno_segmentation_benchmark_v0/")  # path to point cloud data
+
     class_name_mapping = json.loads(Path("exercise_2/data/shape_parts_info.json").read_text())  # mapping for ShapeNet ids -> names
     classes = sorted(class_name_mapping.keys())
     part_id_to_overall_id = json.loads(Path.read_text(Path(__file__).parent.parent / 'data' / 'partid_to_overallid.json'))
@@ -49,10 +50,17 @@ class ShapeNetParts(torch.utils.data.Dataset):
         """
         category_id, shape_id = shapenet_id.split('/')
 
-        # TODO: Load point cloud and segmentation labels, subsample to 1024 points. Make sure points and labels still correspond afterwards!
-        # TODO: Important: Use ShapeNetParts.part_id_to_overall_id to convert the part labels you get from the .seg files from local to global ID as they start at 0 for each shape class whereas we want to predict the overall part class.
-        # ShapeNetParts.part_id_to_overall_id converts an ID in form <shapenetclass_partlabel> to and integer representing the global part class id
+        ################################################################################################################
+        # Load point cloud and segmentation labels, subsample to 1024 points.
+        # Make sure points and labels still correspond afterwards!
 
+        # Important: Use ShapeNetParts.part_id_to_overall_id to convert the part
+        # labels you get from the .seg files from local to global ID as they start at 0
+        # for each shape class whereas we want to predict the overall part class.
+
+        # ShapeNetParts.part_id_to_overall_id converts an ID in form <shapenetclass_partlabel>
+        # to and integer representing the global part class id
+        ################################################################################################################
         path_points = ShapeNetParts.dataset_path / category_id / "points" / f"{shape_id}.pts"
         path_labels = ShapeNetParts.dataset_path / category_id / "points_label" / f"{shape_id}.seg"
 
@@ -61,8 +69,9 @@ class ShapeNetParts(torch.utils.data.Dataset):
         labels_global_list = [ShapeNetParts.part_id_to_overall_id[f"{category_id}_{label}"] for label in labels_local_list]
         labels = np.array(labels_global_list)
 
-        idx = np.random.choice(np.arange(len(labels)), 1024, replace=len(labels)<1024)
+        idx = np.random.choice(np.arange(len(labels)), 1024, replace=len(labels) < 1024)
         points = points[idx].astype(np.float32).T
         labels = labels[idx]
+        ################################################################################################################
 
         return points, labels

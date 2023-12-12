@@ -8,12 +8,14 @@ from exercise_2.model.pointnet import PointNetSegmentation
 
 def train(model, trainloader, valloader, device, config):
 
-    # TODO Declare loss and move to specified device
+    ############################################################################
+    # Declare loss and move to specified device
     loss_criterion = torch.nn.CrossEntropyLoss()
     loss_criterion.to(device)
 
-    # TODO Declare optimizer
+    # Declare optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=config['learning_rate'])
+    ############################################################################
 
     # set model to train, important if your network has e.g. dropout or batchnorm layers
     model.train()
@@ -26,9 +28,9 @@ def train(model, trainloader, valloader, device, config):
 
     for epoch in range(config['max_epochs']):
         for i, batch in enumerate(trainloader):
-            # TODO Add missing pieces, as in the exercise parts before
             ShapeNetParts.move_batch_to_device(batch, device)
 
+            ############################################################################################################
             # 1. zero out previously accumulated gradients
             optimizer.zero_grad()
 
@@ -36,6 +38,7 @@ def train(model, trainloader, valloader, device, config):
             prediction = model(batch['points'])
 
             # 3. compute total loss
+            # this part is different from the classification model
             num_classes = ShapeNetParts.num_classes
             labels = batch['segmentation_labels']
             one_hot_targets = torch.nn.functional.one_hot(labels, num_classes).float()
@@ -46,6 +49,7 @@ def train(model, trainloader, valloader, device, config):
 
             # 5. update network params
             optimizer.step()
+            ############################################################################################################
 
             # loss logging
             train_loss_running += loss_total.item()
@@ -65,10 +69,11 @@ def train(model, trainloader, valloader, device, config):
                 # forward pass and evaluation for entire validation set
                 loss_val = 0.
                 for batch_val in valloader:
-
+                    ###################################################################################################
                     ShapeNetParts.move_batch_to_device(batch_val, device)
                     prediction = model(batch_val['points'])
                     _, predicted_label = torch.max(prediction, dim=-1)
+                    ###################################################################################################
 
                     total += predicted_label.numel()
                     correct += (predicted_label == batch_val['segmentation_labels']).sum().item()
@@ -94,7 +99,9 @@ def train(model, trainloader, valloader, device, config):
                     torch.save(model.state_dict(), f'exercise_2/runs/{config["experiment_name"]}/model_best.ckpt')
                     best_accuracy = accuracy
 
+                ########################################################################################################
                 model.train()
+                ########################################################################################################
 
 
 def main(config):

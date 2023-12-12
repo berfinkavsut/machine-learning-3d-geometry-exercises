@@ -78,13 +78,10 @@ def train(model, trainloader, valloader, device, config):
                     _, predicted_label = torch.max(prediction, 1)
 
                     # 3. Keep track of total / correct / loss_total_val
-                    ground_truth = batch_val['label']
-
-                    correct += (predicted_label == ground_truth).sum().item()
+                    total += predicted_label.numel()
+                    correct += (predicted_label == batch_val['label']).sum().item()
 
                     loss_total_val = loss_total_val + loss_criterion(prediction, ground_truth).item()
-
-                    total += ground_truth.size(0)
 
                 accuracy = 100 * correct / total
 
