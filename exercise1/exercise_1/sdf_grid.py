@@ -13,7 +13,8 @@ def sdf_grid(sdf_function, resolution):
     :return: An SDF grid of specified resolution (i.e. an array of dim (resolution, resolution, resolution)
              with positive values outside the shape and negative values inside.
     """
-    # ###############
+
+    ####################################################################################################################
     x_ = np.linspace(start=-0.5, stop=0.5, num=resolution, endpoint=True, dtype=np.float64)
     y_ = np.linspace(start=-0.5, stop=0.5, num=resolution, endpoint=True, dtype=np.float64)
     z_ = np.linspace(start=-0.5, stop=0.5, num=resolution, endpoint=True, dtype=np.float64)
@@ -23,4 +24,4 @@ def sdf_grid(sdf_function, resolution):
     sdf_values = sdf_function(x, y, z)
     sdf_grid = np.reshape(sdf_values, newshape=(resolution, resolution, resolution), order='F')
     return sdf_grid
-    # ###############
+    ####################################################################################################################

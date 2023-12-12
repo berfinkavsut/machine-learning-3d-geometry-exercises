@@ -135,6 +135,7 @@ triangle_table = [
     [8, 3, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1], [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
 ]
 
+
 def compute_cube_index(cube: np.array, isolevel=0.) -> int:
     """
     Takes a cube and returns its Marching Cubes index.
@@ -147,7 +148,7 @@ def compute_cube_index(cube: np.array, isolevel=0.) -> int:
     :return: The cube index as integer value
     """
 
-    # ###############
+    #########################################################
     binary_index = ''
     for i in range(8):
         if cube[i] < isolevel:
@@ -156,7 +157,7 @@ def compute_cube_index(cube: np.array, isolevel=0.) -> int:
             binary_index += '0'
     cude_index = int(binary_index, 2)
     return cude_index
-    # ###############
+    #########################################################
 
 
 def marching_cubes(sdf: np.array) -> tuple:
@@ -170,7 +171,7 @@ def marching_cubes(sdf: np.array) -> tuple:
     :return: A tuple with (1) a numpy array of vertices (nx3) and (2) a numpy array of faces (mx3)
     """
 
-    # ###############
+    ###################################################################################################################
     global_vertices = []
     global_faces = []
 
@@ -249,7 +250,7 @@ def marching_cubes(sdf: np.array) -> tuple:
     global_faces = np.array(global_faces)
 
     return global_vertices, global_faces
-    # ###############
+    ###################################################################################################################
 
 
 def vertex_interpolation(p_1, p_2, v_1, v_2, isovalue=0.):
@@ -262,8 +263,7 @@ def vertex_interpolation(p_1, p_2, v_1, v_2, isovalue=0.):
     :param isovalue: The iso value, always 0 in our case
     :return: A single point
     """
-
-    # p_2 > p_1
-    # v_1 is negative, v_2 is positive
-    t = (-v_1) / (v_2 - v_1)
+    ###############################################################
+    t = (np.abs(v_1) + isovalue) / (np.abs(v_2) + np.abs(v_1))
     return p_1 + t * (p_2 - p_1)
+    ###############################################################

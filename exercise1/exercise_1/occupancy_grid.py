@@ -1,6 +1,7 @@
 """SDF to Occupancy Grid"""
 import numpy as np
 
+
 def occupancy_grid(sdf_function, resolution):
     """
     Create an occupancy grid at the specified resolution given the implicit representation.
@@ -11,7 +12,7 @@ def occupancy_grid(sdf_function, resolution):
     :return: An occupancy grid of specified resolution (i.e. an array of dim (resolution, resolution, resolution)
              with value 0 outside the shape and 1 inside.
     """
-    # ###############
+    ####################################################################
     x_ = np.linspace(start=-0.5, stop=0.5, num=resolution, endpoint=True, dtype=np.float64)
     y_ = np.linspace(start=-0.5, stop=0.5, num=resolution, endpoint=True, dtype=np.float64)
     z_ = np.linspace(start=-0.5, stop=0.5, num=resolution, endpoint=True, dtype=np.float64)
@@ -25,4 +26,4 @@ def occupancy_grid(sdf_function, resolution):
     occupancy_grid[sdf_grid < 0] = 1  # negative values are inside 
 
     return occupancy_grid
-    # ###############
+    ####################################################################

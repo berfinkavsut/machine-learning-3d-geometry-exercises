@@ -14,10 +14,10 @@ def signed_distance_sphere(x, y, z, r, x_0, y_0, z_0):
     :param z_0: z coordinate of the center of the sphere
     :return: signed distance from the surface of the sphere
     """
-    # ###############
+    ####################################################################
     d = np.sqrt((x - x_0) ** 2 + (y - y_0) ** 2 + (z - z_0) ** 2) - r
     return d
-    # ###############
+    ####################################################################
 
 
 def signed_distance_torus(x, y, z, R, r, x_0, y_0, z_0):
@@ -33,11 +33,11 @@ def signed_distance_torus(x, y, z, R, r, x_0, y_0, z_0):
     :param z_0: z coordinate of the center of the torus
     :return: signed distance from the surface of the torus
     """
-    # ###############
+    ####################################################################
     a = np.sqrt((x-x_0) ** 2 + (z - z_0) ** 2) - R
     d = np.sqrt(a ** 2 + (y - y_0) ** 2) - r
     return d
-    # ###############
+    ####################################################################
 
 
 def signed_distance_atom(x, y, z):
@@ -54,8 +54,8 @@ def signed_distance_atom(x, y, z):
     orbit_thickness = 0.01  # The minor radius of the orbit torus
     electron_center = (orbit_radius, 0, 0)
     electron_radius = 0.05
-    # ###############
 
+    ####################################################################
     # Proton
     f1 = signed_distance_sphere(x, y, z, proton_radius, *proton_center)
 
@@ -67,4 +67,4 @@ def signed_distance_atom(x, y, z):
 
     sdf_union = np.minimum(np.minimum(f1, f2), f3)
     return sdf_union
-    # ###############
+    ####################################################################
