@@ -6,6 +6,7 @@ import torch
 
 from exercise_2.data.shapenet import ShapeNetVox
 from exercise_2.model.cnn3d import ThreeDeeCNN
+from torch.nn.modules.loss import L1Loss
 
 
 def main(config):
@@ -58,17 +59,17 @@ def main(config):
 
 def train(model, trainloader, valloader, device, config):
 
+    ############################################################################
     # declare loss and move to specified device
-    # TODO: Define loss
-    loss_criterion = None
-
+    loss_criterion = torch.nn.CrossEntropyLoss()
     loss_criterion.to(device)
 
-    # TODO: declare optimizer (learning rate provided in config)
-    optimizer = None
+    # declare optimizer (learning rate provided in config)
+    optimizer = torch.optim.Adam(model.parameters(), lr=config['learning_rate'])
 
     # set model to train, important if your network has e.g. dropout or batchnorm layers
     model.train()
+    ############################################################################
 
     # keep track of best validation accuracy achieved so that we can save the weights
     best_accuracy = 0.
@@ -81,19 +82,27 @@ def train(model, trainloader, valloader, device, config):
             # move batch to device
             ShapeNetVox.move_batch_to_device(batch, device)
 
-            # TODO: zero out previously accumulated gradients
+            ############################################################################
+            # 1. zero out previously accumulated gradients
+            optimizer.zero_grad()
 
-            # TODO: forward pass
-            prediction = None
+            # 2. forward pass
+            prediction = model(batch['voxel'])
 
-            # TODO: compute total loss = sum of loss for whole prediction + losses for partial predictions
+            # 3. compute total loss = sum of loss for whole prediction + losses for partial predictions
             loss_total = torch.zeros([1], dtype=batch['voxel'].dtype, requires_grad=True).to(device)
             for output_idx in range(prediction.shape[1]):
-                loss_total = loss_total + None  # TODO: Loss due to prediction[:, output_idx, :] (output_idx=0 for global prediction, 1-8 local)
-
-            # TODO: compute gradients on loss_total (backward pass)
-
-            # TODO: update network params
+                # Loss due to prediction[:, output_idx, :] (output_idx=0 for global prediction, 1-8 local)
+                loss_total = loss_total + loss_criterion(prediction[:, output_idx, :], batch['label'])
+            
+            # loss_total = loss_total / 9
+            
+            # 4. compute gradients on loss_total (backward pass)
+            loss_total.backward()
+           
+            # 5. update network params
+            optimizer.step()
+            ############################################################################ 
 
             # loss logging
             train_loss_running += loss_total.item()
@@ -106,7 +115,8 @@ def train(model, trainloader, valloader, device, config):
             # validation evaluation and logging
             if iteration % config['validate_every_n'] == (config['validate_every_n'] - 1):
 
-                # set model to eval, important if your network has e.g. dropout or batchnorm layers
+                # set model to eval
+                # important if your network has e.g. dropout or batchnorm layers!
                 model.eval()
 
                 loss_total_val = 0
@@ -115,14 +125,23 @@ def train(model, trainloader, valloader, device, config):
                 for batch_val in valloader:
                     ShapeNetVox.move_batch_to_device(batch_val, device)
 
+                    ############################################################################ 
                     with torch.no_grad():
-                        # TODO: Get prediction scores
-                        prediction = None
+                        # 1. Get prediction scores
+                        prediction = model(batch_val['voxel']).mean(dim=1)
 
-                    # TODO: Get predicted labels from scores
-                    predicted_label = None
+                    # 2. Get predicted labels from scores
+                    _, predicted_label = torch.max(prediction, 1)
 
-                    # TODO: keep track of total / correct / loss_total_val
+                    # 3. Keep track of total / correct / loss_total_val
+                    ground_truth = batch_val['label']
+                    
+                    correct += (predicted_label == ground_truth).sum().item()
+
+                    loss_total_val = loss_total_val + loss_criterion(prediction, ground_truth).item()
+
+                    total += ground_truth.size(0)
+                    ############################################################################ 
 
                 accuracy = 100 * correct / total
 
@@ -131,6 +150,7 @@ def train(model, trainloader, valloader, device, config):
                 if accuracy > best_accuracy:
                     torch.save(model.state_dict(), f'exercise_2/runs/{config["experiment_name"]}/model_best.ckpt')
                     best_accuracy = accuracy
-
+           
                 # set model back to train
                 model.train()
+

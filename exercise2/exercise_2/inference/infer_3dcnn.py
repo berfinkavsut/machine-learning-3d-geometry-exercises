@@ -17,6 +17,7 @@ class InferenceHandler3DCNN:
         self.model.load_state_dict(torch.load(ckpt, map_location='cpu'))
         self.model.eval()
 
+    # noinspection PyInterpreter
     def infer_single(self, voxels):
         """
         Infer class of the shape given its voxel grid representation
@@ -25,9 +26,11 @@ class InferenceHandler3DCNN:
         """
         input_tensor = torch.from_numpy(voxels).float().unsqueeze(0).unsqueeze(0)
 
-        # TODO: Predict class
-        prediction = None
-        class_id = None
-        class_name = None
+        ########################################################################
+        prediction = self.model(input_tensor).mean(dim=1)
+        _, predicted_label = torch.max(prediction, 1)
+        class_id = predicted_label.item()
+        class_name = ShapeNetVox.class_name_mapping[ShapeNetVox.classes[class_id]]
+        ########################################################################
 
         return class_name
