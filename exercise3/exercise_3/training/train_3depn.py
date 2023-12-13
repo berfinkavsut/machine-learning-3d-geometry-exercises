@@ -8,14 +8,24 @@ from exercise_3.data.shapenet import ShapeNet
 
 
 def train(model, train_dataloader, val_dataloader, device, config):
-    # TODO: Declare loss and move to device; we need both smoothl1 and pure l1 losses here
+    #################################################################################
+    # Declare loss and move to device; we need both smoothl1 and pure l1 losses here
+    loss_criterion = torch.nn.SmoothL1Loss()
+    loss_criterion.to(device)
 
-    # TODO: Declare optimizer with learning rate given in config
+    loss_criterion_test = torch.nn.L1Loss()
+    loss_criterion_test.to(device)
 
-    # Here, we follow the original implementation to also use a learning rate scheduler -- it simply reduces the learning rate to half every 20 epochs
+    # Declare optimizer with learning rate given in config
+    optimizer = torch.optim.Adam(model.parameters(), lr=config['learning_rate'])
+    #################################################################################
+
+    # Here, we follow the original implementation to also use a learning rate scheduler
+    # -- it simply reduces the learning rate to half every 20 epochs
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
 
-    # TODO: Set model to train
+    # Set model to train
+    model.train()
 
     best_loss_val = np.inf
 
@@ -24,14 +34,35 @@ def train(model, train_dataloader, val_dataloader, device, config):
 
     for epoch in range(config['max_epochs']):
         for batch_idx, batch in enumerate(train_dataloader):
-            # TODO: Move batch to device, set optimizer gradients to zero, perform forward pass
+            #################################################################################
+            # Move batch to device, set optimizer gradients to zero, perform forward pass
+            ShapeNet.move_batch_to_device(batch, device)
+
+            # 1. zero out previously accumulated gradients
+            optimizer.zero_grad()
+
+            # 2. forward pass
+            reconstruction = model(batch['input_sdf'])
+            #################################################################################
+
 
             # Mask out known regions -- only use loss on reconstructed, previously unknown regions
             reconstruction[batch['input_sdf'][:, 1] == 1] = 0  # Mask out known
+
             target = batch['target_df']
             target[batch['input_sdf'][:, 1] == 1] = 0
 
-            # TODO: Compute loss, Compute gradients, Update network parameters
+
+            #################################################################################
+            # 3. Compute loss
+            loss = loss_criterion(reconstruction, target)
+
+            # 4. Compute gradients
+            loss.backward()
+
+            # 5. Update network parameters
+            optimizer.step()
+            #################################################################################
 
             # Logging
             train_loss_running += loss.item()
@@ -43,7 +74,8 @@ def train(model, train_dataloader, val_dataloader, device, config):
 
             # Validation evaluation and logging
             if iteration % config['validate_every_n'] == (config['validate_every_n'] - 1):
-                # TODO: Set model to eval
+                # Set model to eval
+                model.eval()
 
                 # Evaluation on entire validation set
                 loss_val = 0.
@@ -70,7 +102,8 @@ def train(model, train_dataloader, val_dataloader, device, config):
 
                 print(f'[{epoch:03d}/{batch_idx:05d}] val_loss: {loss_val:.6f} | best_loss_val: {best_loss_val:.6f}')
 
-                # TODO: Set model back to train
+                # Set model back to train
+                model.train()
 
         scheduler.step()
 
