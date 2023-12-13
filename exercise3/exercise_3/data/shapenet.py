@@ -27,9 +27,8 @@ class ShapeNet(torch.utils.data.Dataset):
 
         #################################################################
         # Apply truncation to sdf and df
-        truncation_value = 3.0
-        input_sdf = np.clip(input_sdf, -truncation_value, truncation_value)
-        target_df = np.clip(target_df, -truncation_value, truncation_value)
+        input_sdf = np.clip(input_sdf, a_min=-3, a_max=3)
+        target_df = np.clip(target_df, a_min=0, a_max=3)
 
         # Stack (distances, sdf sign) for the input sdf
         sdf_sign = np.sign(input_sdf)
