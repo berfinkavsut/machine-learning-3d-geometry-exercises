@@ -25,9 +25,19 @@ class ShapeNet(torch.utils.data.Dataset):
         input_sdf = ShapeNet.get_shape_sdf(sdf_id)
         target_df = ShapeNet.get_shape_df(df_id)
 
-        # TODO Apply truncation to sdf and df
-        # TODO Stack (distances, sdf sign) for the input sdf
-        # TODO Log-scale target df
+        #################################################################
+        # Apply truncation to sdf and df
+        truncation_value = 3.0
+        input_sdf = np.clip(input_sdf, -truncation_value, truncation_value)
+        target_df = np.clip(target_df, -truncation_value, truncation_value)
+
+        # Stack (distances, sdf sign) for the input sdf
+        sdf_sign = np.sign(input_sdf)
+        input_sdf = np.stack([np.abs(input_sdf), sdf_sign], axis=0)
+
+        # Log-scale target df
+        target_df = np.log(target_df + 1)
+        #################################################################
 
         return {
             'name': f'{sdf_id}-{df_id}',
@@ -40,17 +50,44 @@ class ShapeNet(torch.utils.data.Dataset):
 
     @staticmethod
     def move_batch_to_device(batch, device):
-        # TODO add code to move batch to device
-        pass
+        #################################################################
+        # Add code to move batch to device
+        batch['input_sdf'] = batch['input_sdf'].to(device)
+        batch['target_df'] = batch['target_df'].to(device)
+        #################################################################
 
     @staticmethod
     def get_shape_sdf(shapenet_id):
-        sdf = None
-        # TODO implement sdf data loading
+        ########################################################################
+        # Implement sdf data loading
+        category_id, shape_id_with_trajectory = shapenet_id.split('/')
+        path = ShapeNet.dataset_sdf_path / category_id / f"{shape_id_with_trajectory}.sdf"
+
+        dim = np.fromfile(path, dtype=np.uint64, count=3)
+        data_num = (dim[0] * dim[1] * dim[2])
+
+        byte_num = 8  # uint64 has 8 bytes
+        sdf = np.fromfile(path, dtype=np.float32, offset=(byte_num * 3), count=data_num)
+
+        sdf_reshaped = sdf.reshape(sdf.shape[0], 1)
+        sdf = sdf_reshaped.reshape(dim[0], dim[1], dim[2])
         return sdf
+        ########################################################################
 
     @staticmethod
     def get_shape_df(shapenet_id):
-        df = None
-        # TODO implement df data loading
+        ########################################################################
+        # Implement df data loading
+        category_id, shape_id_with_trajectory = shapenet_id.split('/')
+        path = ShapeNet.dataset_df_path / category_id / f"{shape_id_with_trajectory}.df"
+
+        dim = np.fromfile(path, dtype=np.uint64)
+        data_num = (dim[0] * dim[1] * dim[2])
+
+        byte_num = 8  # uint64 has 8 bytes
+        df = np.fromfile(path, dtype=np.float32, offset=(byte_num * 3), count=data_num)
+
+        df_reshaped = df.reshape(df.shape[0], 1)
+        df = df_reshaped.reshape(dim[0], dim[1], dim[2])
         return df
+        ########################################################################
