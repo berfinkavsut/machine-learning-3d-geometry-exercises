@@ -38,9 +38,11 @@ class InferenceHandler3DEPN:
 
         with torch.no_grad():
             ###################################################################################
+            # TODO: wrong input type or sizes
             # Pass input in the right format though the network and
             # revert the log scaling by applying exp and subtracting 1
             reconstructed_df = self.model(input_sdf)  # output is in log-scale
+            # np.expand_dims(input_sdf, axis=0)
             reconstructed_df = np.exp(reconstructed_df) - 1
             ###################################################################################
 
