@@ -80,7 +80,6 @@ class ThreeDEPN(nn.Module):
 
         # Bottleneck
         # Reshape and apply bottleneck layers
-        print(x_e4.shape)
         x = x_e4.view(b, -1)
         x = self.bottleneck(x)
         x = x.view(x.shape[0], x.shape[1], 1, 1, 1)
