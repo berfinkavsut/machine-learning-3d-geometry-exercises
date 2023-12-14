@@ -42,7 +42,6 @@ class ShapeImplicit(torch.utils.data.Dataset):
         sdf_samples_path = ShapeImplicit.dataset_path / item / "sdf.npz"
 
         # read points and their sdf values from disk
-        # TODO: Implement the method get_sdf_samples
         sdf_samples = self.get_sdf_samples(sdf_samples_path)
 
         points = sdf_samples[:, :3]
@@ -62,8 +61,7 @@ class ShapeImplicit(torch.utils.data.Dataset):
         """
         :return: length of the dataset
         """
-        # TODO: Implement
-        return
+        return len(self.items)
 
     @staticmethod
     def move_batch_to_device(batch, device):
@@ -85,11 +83,27 @@ class ShapeImplicit(torch.utils.data.Dataset):
         pos_tensor = remove_nans(torch.from_numpy(npz["pos"]))
         neg_tensor = remove_nans(torch.from_numpy(npz["neg"]))
 
-        # TODO: Implement such that you return a pytorch float32 torch tensor of shape (self.num_sample_points, 4)
+        #####################################################################################
+        # Implement such that you return a pytorch float32 torch tensor of shape (self.num_sample_points, 4)
         # the returned tensor shoud have approximately self.num_sample_points/2 randomly selected samples from pos_tensor
         # and approximately self.num_sample_points/2 randomly selected samples from neg_tensor
+        #####################################################################################
+        point_num = pos_tensor.shape[0]
+        sample_num = self.num_sample_points // 2
 
-        return
+        pos_idx = np.random.choice(np.arange(point_num), sample_num, replace=point_num < sample_num)
+        pos_tensor_selected = pos_tensor[pos_idx].to(dtype=torch.float32)
+
+        neg_idx = np.random.choice(np.arange(point_num), sample_num, replace=point_num < sample_num)
+        neg_tensor_selected = neg_tensor[neg_idx].to(dtype=torch.float32)
+
+        samples_selected = torch.cat([pos_tensor_selected, neg_tensor_selected], dim=0)
+
+        # TODO check if we need clamping here
+        # samples_selected[:, 3:] = torch.clamp(samples_selected[:, 3:], -0.1, 0.1)
+        #####################################################################################
+
+        return samples_selected
 
     @staticmethod
     def get_mesh(shape_id):
@@ -114,7 +128,7 @@ class ShapeImplicit(torch.utils.data.Dataset):
         samples = torch.cat([pos_tensor, neg_tensor], 0)
         points = samples[:, :3]
 
-        # trucate sdf values
+        # truncate sdf values
         sdf = torch.clamp(samples[:, 3:], -0.1, 0.1)
 
         return points, sdf
