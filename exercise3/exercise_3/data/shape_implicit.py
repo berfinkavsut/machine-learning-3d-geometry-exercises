@@ -22,6 +22,7 @@ class ShapeImplicit(torch.utils.data.Dataset):
         assert split in ['train', 'val', 'overfit']
 
         self.num_sample_points = num_sample_points
+        self.sample_num = self.num_sample_points // 2
         self.items = Path(f"exercise_3/data/splits/sofas/{split}.txt").read_text().splitlines()  # keep track of shape identifiers based on split
 
     def __getitem__(self, index):
@@ -88,19 +89,15 @@ class ShapeImplicit(torch.utils.data.Dataset):
         # the returned tensor shoud have approximately self.num_sample_points/2 randomly selected samples from pos_tensor
         # and approximately self.num_sample_points/2 randomly selected samples from neg_tensor
         #####################################################################################
-        point_num = pos_tensor.shape[0]
-        sample_num = self.num_sample_points // 2
-
-        pos_idx = np.random.choice(np.arange(point_num), sample_num, replace=point_num < sample_num)
+        pos_num = pos_tensor.size(0)
+        pos_idx = np.random.choice(np.arange(pos_num), self.sample_num, replace=(pos_num < self.sample_num))
         pos_tensor_selected = pos_tensor[pos_idx].to(dtype=torch.float32)
 
-        neg_idx = np.random.choice(np.arange(point_num), sample_num, replace=point_num < sample_num)
+        neg_num = neg_tensor.size(0)
+        neg_idx = np.random.choice(np.arange(neg_num), self.sample_num, replace=(neg_num < self.sample_num))
         neg_tensor_selected = neg_tensor[neg_idx].to(dtype=torch.float32)
 
         samples_selected = torch.cat([pos_tensor_selected, neg_tensor_selected], dim=0)
-
-        # TODO check if we need clamping here
-        # samples_selected[:, 3:] = torch.clamp(samples_selected[:, 3:], -0.1, 0.1)
         #####################################################################################
 
         return samples_selected
@@ -122,13 +119,13 @@ class ShapeImplicit(torch.utils.data.Dataset):
         :return: two torch float32 tensors, a Nx3 tensor containing point coordinates, and Nx1 tensor containing their sdf values
         """
         npz = np.load(ShapeImplicit.dataset_path / shape_id / "sdf.npz")
-        pos_tensor = remove_nans(torch.from_numpy(npz["pos"]))
+        pos_tensor = remove_nans(torch.from_numpy(npz["pos"]))  # N in total with negative points
         neg_tensor = remove_nans(torch.from_numpy(npz["neg"]))
 
-        samples = torch.cat([pos_tensor, neg_tensor], 0)
-        points = samples[:, :3]
+        samples = torch.cat([pos_tensor, neg_tensor], dim=0)  # Nx4
+        points = samples[:, :3]  # Nx3
 
         # truncate sdf values
-        sdf = torch.clamp(samples[:, 3:], -0.1, 0.1)
+        sdf = torch.clamp(samples[:, 3:], -0.1, 0.1)  # Nx1
 
         return points, sdf
