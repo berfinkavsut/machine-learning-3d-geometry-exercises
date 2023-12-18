@@ -65,7 +65,7 @@ class InferenceHandlerDeepSDF:
         )
 
         for iter_idx in range(num_optimization_iters):
-            model.zero_grad()
+            optimizer.zero_grad()
 
             batch_indices = torch.randint(sdf.size(dim=0), (self.num_samples,))
 
