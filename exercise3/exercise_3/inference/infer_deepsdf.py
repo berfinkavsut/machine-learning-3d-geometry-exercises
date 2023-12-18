@@ -59,7 +59,7 @@ class InferenceHandlerDeepSDF:
 
         # TODO: create optimizer on latent, use a learning rate of 0.005
         optimizer = torch.optim.Adam(
-                params=latent,
+                params=[latent],
                 lr=0.005,
                 weight_decay=0.0001
         )
@@ -67,7 +67,7 @@ class InferenceHandlerDeepSDF:
         for iter_idx in range(num_optimization_iters):
             model.zero_grad()
 
-            batch_indices = torch.randint(sdf.size(dim=0), self.num_samples)
+            batch_indices = torch.randint(sdf.size(dim=0), (self.num_samples,))
 
             batch_points = points[batch_indices, :]
             batch_sdf = sdf[batch_indices, :]
@@ -88,7 +88,7 @@ class InferenceHandlerDeepSDF:
             # regularize latent code
             loss += 1e-4 * torch.mean(latent.pow(2))
 
-            model.backward()
+            loss.backward()
             optimizer.step()
 
             # loss logging
