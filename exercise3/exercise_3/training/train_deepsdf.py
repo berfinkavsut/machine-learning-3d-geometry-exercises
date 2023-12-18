@@ -148,8 +148,9 @@ def main(config):
 
     # Load model if resuming from checkpoint
     if config['resume_ckpt'] is not None:
-        model.load_state_dict(torch.load(config['resume_ckpt'] + "_model.ckpt", map_location='cpu'))
-        latent_vectors = torch.nn.Embedding.from_pretrained(torch.load(config['resume_ckpt'] + "_latent.ckpt", map_location='cpu'))
+        model.load_state_dict(torch.load(config['resume_ckpt'] + "model_best.ckpt", map_location='cpu'))
+        latent_tensor = torch.load(config['resume_ckpt'] + "latent_best.ckpt", map_location='cpu')['weight']
+        latent_vectors = torch.nn.Embedding.from_pretrained(latent_tensor)
 
     # Move model to specified device
     model.to(device)
