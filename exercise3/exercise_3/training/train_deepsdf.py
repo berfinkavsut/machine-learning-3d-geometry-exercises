@@ -21,8 +21,7 @@ def train(model, latent_vectors, train_dataloader, device, config):
         },
         {
             'params': latent_vectors.parameters(),
-            'lr': config['learning_rate_code'],
-            'weight_decay': config['lambda_code_regularization']
+            'lr': config['learning_rate_code']
         }
     ])
 
