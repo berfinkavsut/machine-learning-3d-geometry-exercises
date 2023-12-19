@@ -60,8 +60,7 @@ class InferenceHandlerDeepSDF:
         # TODO: create optimizer on latent, use a learning rate of 0.005
         optimizer = torch.optim.Adam(
                 params=[latent],
-                lr=0.005,
-                weight_decay=0.0001
+                lr=0.005
         )
 
         for iter_idx in range(num_optimization_iters):
