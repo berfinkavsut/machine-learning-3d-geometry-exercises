@@ -11,8 +11,6 @@ class DeepSDFDecoder(nn.Module):
         super().__init__()
         dropout_prob = 0.2
         ###############################################################################
-        # TODO better way to add weight norms?
-        # TODO model parameter numbers are not exactly
         self.fc0 = torch.nn.utils.weight_norm(nn.Linear(in_features=(latent_size+3), out_features=512))
         self.fc1 = torch.nn.utils.weight_norm(nn.Linear(in_features=512, out_features=512))
         self.fc2 = torch.nn.utils.weight_norm(nn.Linear(in_features=512, out_features=512))

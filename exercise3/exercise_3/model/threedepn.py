@@ -73,10 +73,10 @@ class ThreeDEPN(nn.Module):
         ########################################################################################
         # Encode
         # Pass x though encoder while keeping the intermediate outputs for the skip connections
-        x_e1 = self.enc1(x)
-        x_e2 = self.enc2(x_e1)
-        x_e3 = self.enc3(x_e2)
-        x_e4 = self.enc4(x_e3)
+        x_e1 = self.enc1(x)    # 2*32*32*32  -> 80*16*16*16
+        x_e2 = self.enc2(x_e1) # 80*16*16*16 -> 160*8*8*8
+        x_e3 = self.enc3(x_e2) # 160*8*8*8   -> 320*4*4*4
+        x_e4 = self.enc4(x_e3) # 320*4*4*4   -> 640*1*1*1
 
         # Bottleneck
         # Reshape and apply bottleneck layers
@@ -86,10 +86,10 @@ class ThreeDEPN(nn.Module):
 
         # Decode
         # Pass x through the decoder, applying the skip connections in the process
-        x_d1 = self.dec1(torch.cat((x, x_e4), dim=1))     # 640x1x1x1 * 2 -> # 320x4x4x4
-        x_d2 = self.dec2(torch.cat((x_d1, x_e3), dim=1))  # 320x4x4x4 * 2 -> # 160x8x8x8 * 2
-        x_d3 = self.dec3(torch.cat((x_d2, x_e2), dim=1))  # 160x8x8x8 * 2 -> 80x16x16x16
-        x_d4 = self.dec4(torch.cat((x_d3, x_e1), dim=1))  # 80x16x16x16 * 2 ->2 x32x32x32
+        x_d1 = self.dec1(torch.cat((x, x_e4), dim=1))     # (640*1*1*1)*2   -> 320*4*4*4
+        x_d2 = self.dec2(torch.cat((x_d1, x_e3), dim=1))  # (320*4*4*4)*2   -> 160*8*8*8
+        x_d3 = self.dec3(torch.cat((x_d2, x_e2), dim=1))  # (160*8*8*8)*2   -> 80*16*16*16
+        x_d4 = self.dec4(torch.cat((x_d3, x_e1), dim=1))  # (80*16*16*16)*2 -> 1*32*32*32
         ########################################################################################
 
         x = torch.squeeze(x_d4, dim=1)
