@@ -9,17 +9,20 @@ from exercise_3.util.misc import evaluate_model_on_grid
 
 def train(model, latent_vectors, train_dataloader, device, config):
 
-    # Declare loss and move to device
+    ###################################################################################
+    # declare loss and move to device
     loss_criterion = torch.nn.L1Loss()
     loss_criterion.to(device)
 
     # declare optimizer
     optimizer = torch.optim.Adam([
         {
+            # Optimizer params and learning rate for model
             'params': model.parameters(),
             'lr': config['learning_rate_model']
         },
         {
+            # Optimizer params and learning rate for latent code
             'params': latent_vectors.parameters(),
             'lr': config['learning_rate_code']
         }
@@ -27,23 +30,27 @@ def train(model, latent_vectors, train_dataloader, device, config):
 
     # declare learning rate scheduler
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=500, gamma=0.5)
+    ###################################################################################
 
-    # Set model to train
+    # set model to train
     model.train()
 
-    # Keep track of running average of train loss for printing
+    # keep track of running average of train loss for printing
     train_loss_running = 0.
 
-    # Keep track of best training loss for saving the model
+    # keep track of best training loss for saving the model
     best_loss = float('inf')
 
     for epoch in range(config['max_epochs']):
 
         for batch_idx, batch in enumerate(train_dataloader):
-            # Move batch to device
+            # move batch to device
             ShapeImplicit.move_batch_to_device(batch, device)
 
+            ###################################################################################
+            # set gradients to zero 
             optimizer.zero_grad()
+            ###################################################################################
 
             # calculate number of samples per batch (= number of shapes in batch * number of points per shape)
             num_points_per_batch = batch['points'].shape[0] * batch['points'].shape[1]
@@ -57,8 +64,10 @@ def train(model, latent_vectors, train_dataloader, device, config):
             points = batch['points'].reshape((num_points_per_batch, 3))
             sdf = batch['sdf'].reshape((num_points_per_batch, 1))
 
+            ###################################################################################
             predicted_sdf = model(torch.cat([batch_latent_vectors, points], dim=-1))
             predicted_sdf = torch.clamp(predicted_sdf, min=-0.1, max=0.1)
+            ###################################################################################
 
             # compute loss
             loss = loss_criterion(predicted_sdf, sdf)
@@ -68,8 +77,10 @@ def train(model, latent_vectors, train_dataloader, device, config):
             if epoch > 100:
                 loss = loss + code_regularization
 
+            ###################################################################################
             loss.backward()
             optimizer.step()
+            ###################################################################################
 
             # loss logging
             train_loss_running += loss.item()
